@@ -12,21 +12,3 @@ export const texts = {
   updateInterval: '链接每小时自动更新一次',
   visitButton: '访问链接'
 } as const;
-
-export const zLibraryLinks: ZLibraryLink[] = [
-  {
-    name: "Z-Library 主域名",
-    url: "https://z-lib.org",
-    description: "Z-Library 的主要域名（可能需要代理访问）"
-  },
-  {
-    name: "Z-Library Tor 地址",
-    url: "http://zlibrary24tuxziyiyfr7zd46ytefdqbqd2axkmxm4o5374ptpc52fad.onion",
-    description: "通过 Tor 网络访问（需要 Tor 浏览器）"
-  },
-  {
-    name: "Z-Library I2P 地址",
-    url: "http://library.i2p",
-    description: "通过 I2P 网络访问（需要 I2P 客户端）"
-  }
-]; 
