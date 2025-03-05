@@ -15,11 +15,17 @@ async function fetchWikipedia(): Promise<string> {
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
           'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         },
-        cache: 'no-cache'
+        next: { revalidate: 3600 }
       });
 
-      if (response.ok) {
-        return response.text();
+      if (!response.ok) {
+        console.error(`维基百科请求失败: ${url}, 状态码: ${response.status}`);
+        continue;
+      }
+
+      const html = await response.text();
+      if (html.includes('Z-Library') && html.includes('z-library.')) {
+        return html;
       }
     } catch (error) {
       console.error(`请求 ${url} 失败:`, error);
@@ -62,8 +68,7 @@ export async function GET() {
     return NextResponse.json(
       { 
         success: false, 
-        error: error instanceof Error ? error.message : '未知错误',
-        timestamp: new Date().toISOString()
+        error: error instanceof Error ? error.message : '未知错误'
       },
       { 
         status: 500,

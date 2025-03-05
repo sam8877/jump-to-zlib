@@ -1,34 +1,45 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { texts, type ZLibraryLink } from './config/links';
 
-export const revalidate = 3600; // 每小时重新验证一次
-
-async function getDomains(): Promise<{ success: boolean; data?: ZLibraryLink[]; error?: string }> {
-  try {
-    // 使用相对协议的完整 URL
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000';
-    
-    const response = await fetch(`${baseUrl}/api/domains`, {
-      next: { revalidate: 3600 },
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`请求失败: ${response.status}`);
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('获取域名失败:', error);
-    return { success: false, error: '网络请求失败，请稍后重试' };
-  }
+interface DomainsResponse {
+  success: boolean;
+  data?: ZLibraryLink[];
+  error?: string;
 }
 
-export default async function Home() {
-  const { success, data: links, error } = await getDomains();
+export default function Home() {
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<DomainsResponse>({
+    success: false,
+    error: '正在加载...'
+  });
+
+  useEffect(() => {
+    async function fetchDomains() {
+      try {
+        const response = await fetch('/api/domains');
+        if (!response.ok) {
+          throw new Error(`请求失败: ${response.status}`);
+        }
+        const result = await response.json();
+        setData(result);
+      } catch (error) {
+        console.error('获取域名失败:', error);
+        setData({
+          success: false,
+          error: '网络请求失败，请稍后重试'
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDomains();
+    const interval = setInterval(fetchDomains, 3600000); // 每小时更新一次
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <main className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -43,9 +54,13 @@ export default async function Home() {
         </div>
 
         <div className="bg-white shadow rounded-lg overflow-hidden">
-          {success && links ? (
+          {loading ? (
+            <div className="p-6 text-center">
+              <p className="text-gray-600">加载中...</p>
+            </div>
+          ) : data.success && data.data ? (
             <div className="divide-y divide-gray-200">
-              {links.map((link: ZLibraryLink, index: number) => (
+              {data.data.map((link: ZLibraryLink, index: number) => (
                 <div key={index} className="p-6 hover:bg-gray-50 transition-colors">
                   <h2 className="text-xl font-semibold text-gray-900 mb-2">
                     {link.name}
@@ -65,7 +80,7 @@ export default async function Home() {
           ) : (
             <div className="p-6 text-center">
               <p className="text-red-600 text-lg">
-                {error || texts.error}
+                {data.error || texts.error}
               </p>
             </div>
           )}
